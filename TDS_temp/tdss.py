@@ -1,105 +1,77 @@
-from machine import ADC, Pin
+import machine
 import time
 
 class TDSSensor:
-    """
-    A class to interface with a TDS (Total Dissolved Solids) sensor using ESP32's ADC.
-    """
-
-    def __init__(self, pin_number: int, delay: float = 1.0, calibration_factor: float = 1.0, average: int = 5):
+    def __init__(self, adc_pin_num=12, calibration_factor=1.0, read_interval=2):
         """
-        Initializes the TDS sensor.
+        Initializes the TDS Sensor.
 
-        :param pin_number: GPIO pin number connected to the TDS sensor's analog output.
-        :param delay: Delay between readings in seconds.
-        :param calibration_factor: Factor to convert voltage to TDS. Adjust based on calibration.
-        :param average: Number of readings to average for stability.
+        :param adc_pin_num: GPIO pin number connected to the TDS sensor's analog output (default: 12)
+        :param calibration_factor: Factor to convert voltage to TDS (ppm) (default: 1.0)
+        :param read_interval: Time between readings in seconds (default: 2)
         """
-        self.pin_number = pin_number
-        self.delay = delay
+        self.adc_pin_num = adc_pin_num
         self.calibration_factor = calibration_factor
-        self.average = average
+        self.read_interval = read_interval
 
-        # Initialize the ADC pin
-        self.adc = ADC(Pin(self.pin_number))
-        self.adc.atten(ADC.ATTN_11DB)  # Set attenuation to 3.3V range
-        self.adc.width(ADC.WIDTH_12BIT)  # Set ADC resolution to 12 bits (0-4095)
+        # Initialize ADC
+        self.adc = machine.ADC(machine.Pin(self.adc_pin_num))
+        self.adc.atten(machine.ADC.ATTN_11DB)  # ~0 - 3.6V
+        self.adc.width(machine.ADC.WIDTH_12BIT)  # 12-bit resolution
 
-        print(f"Initialized TDSSensor on GPIO{self.pin_number} with delay {self.delay}s.")
-
-    def read_voltage(self) -> float:
+    def read_adc_value(self):
         """
-        Reads the raw ADC value and converts it to voltage.
+        Reads the raw ADC value from the TDS sensor.
 
-        :return: Voltage in volts.
+        :return: Raw ADC value (integer)
         """
         adc_value = self.adc.read()
-        voltage = adc_value / 4095 * 3.3  # ESP32 ADC reference voltage is 3.3V
+        return adc_value
+
+    def convert_adc_to_voltage(self, adc_value):
+        """
+        Converts ADC value to voltage.
+
+        :param adc_value: Raw ADC value
+        :return: Voltage in volts (float)
+        """
+        max_adc = 4095  # 12-bit ADC
+        max_voltage = 3.6  # Maximum voltage corresponding to ADC max value
+        voltage = (adc_value / max_adc) * max_voltage
         return voltage
 
-    def read_tds(self) -> float:
+    def calculate_tds(self, voltage):
         """
-        Reads the TDS value based on the voltage.
+        Converts voltage to TDS (ppm).
 
-        :return: TDS value in ppm.
+        :param voltage: Voltage in volts
+        :return: TDS value in ppm (float)
         """
-        voltage = self.read_voltage()
-        tds_value = voltage * self.calibration_factor
-        return tds_value
+        tds = voltage * self.calibration_factor
+        return tds
 
-    def read_tds_average(self) -> float:
+    def get_tds_reading(self):
         """
-        Reads the TDS value multiple times and returns the average for stability.
+        Performs a single TDS reading.
 
-        :return: Averaged TDS value in ppm.
+        :return: Tuple containing (adc_value, voltage, tds)
         """
-        total_tds = 0.0
-        for _ in range(self.average):
-            tds = self.read_tds()
-            total_tds += tds
-            time.sleep(0.2)  # Short delay between readings for stabilization
-        average_tds = total_tds / self.average
-        return average_tds
+        adc_value = self.read_adc_value()
+        voltage = self.convert_adc_to_voltage(adc_value)
+        tds = self.calculate_tds(voltage)
+        return adc_value, voltage, tds
 
-    def start_continuous_reading(self, use_average: bool = True):
+    def start_monitoring(self):
         """
-        Starts continuous reading of TDS values.
-
-        :param use_average: Whether to use averaging for readings.
+        Starts continuous TDS monitoring and prints the readings to the serial console.
         """
+        print("Starting TDS Monitoring...")
         try:
-            print("Starting continuous TDS readings. Press Ctrl+C to stop.")
             while True:
-                if use_average and self.average > 1:
-                    tds = self.read_tds_average()
-                else:
-                    tds = self.read_tds()
-
-                if tds > 0:
-                    print(f"TDS Value: {tds:.2f} ppm")
-                # No output if TDS reading fails or is zero
-
-                time.sleep(self.delay)
+                adc_value, voltage, tds = self.get_tds_reading()
+                # print(f"ADC Value: {adc_value} | Voltage: {voltage:.2f} V | TDS: {tds:.2f} ppm")
+                print(f"TDS: {tds:.2f} ppm")
+                time.sleep(self.read_interval)
         except KeyboardInterrupt:
-            print("\nContinuous reading stopped by user.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+            print("\nTDS Monitoring Stopped.")
 
-    def calibrate(self, known_tds: float):
-        """
-        Calibrates the sensor using a known TDS solution.
-
-        :param known_tds: The known TDS value of the calibration solution in ppm.
-        """
-        print("Starting calibration...")
-        print(f"Please immerse the sensor in a {known_tds} ppm calibration solution.")
-        time.sleep(10)  # Wait for sensor to stabilize
-
-        measured_tds = self.read_tds_average()
-        if measured_tds == 0:
-            print("Calibration failed: Measured TDS is zero.")
-            return
-
-        new_calibration_factor = known_tds / measured_tds
-        self.calibration_factor = new_calibration_factor
-        print(f"Calibration successful. New calibration factor: {self.calibration_factor:.2f}")
