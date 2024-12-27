@@ -74,4 +74,5 @@ class TDSSensor:
                 time.sleep(self.read_interval)
         except KeyboardInterrupt:
             print("\nTDS Monitoring Stopped.")
+            
 
