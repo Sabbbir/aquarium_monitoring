@@ -3,8 +3,6 @@ from tdss import TDSSensor
 from thread_manager import start_thread  # Import the threading function
 import time
 
-import tbd
-
 def temp(delay_temp):
     """
     Temperature monitoring function to be run in a separate thread.
