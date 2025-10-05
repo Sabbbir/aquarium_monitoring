@@ -23,7 +23,7 @@ A comprehensive web dashboard called "Tech-Hatchery" provides real-time monitori
 </div>
 
 ### Individual Hardware Monitoring Units
-Each tank is equipped with a dedicated monitoring unit featuring an ESP32 microcontroller and TFT display. The unit shows real-time water quality metrics directly on the screen, including dissolved oxygen (5.72 mg/L), temperature (32.89°C), salinity (-632 psu), turbidity (0.00 NTU), solidity (0.52 ppm), and pH (7.01).
+Each tank is equipped with a dedicated monitoring unit featuring an ESP32 microcontroller and TFT display.
 
 <div align="center">
   <img src="Images/i2.jpg" alt="Hardware Unit" width="600">
@@ -31,7 +31,7 @@ Each tank is equipped with a dedicated monitoring unit featuring an ESP32 microc
 
 ## Key Features
 
-- **Multi-tank Monitoring**: Simultaneous monitoring of up to 6 aquarium tanks
+- **Multi-tank Monitoring**: Simultaneous monitoring of 6 aquarium tanks
 - **Real-time Data Collection**: Continuous measurement of water quality parameters
 - **Visual Monitoring**: Integrated camera system with NVR for visual tank monitoring
 - **Web Dashboard**: Centralized web interface for monitoring all tanks
@@ -61,7 +61,7 @@ The system uses ESP32 boards as the main processing unit for each monitoring sta
 Each unit features a color TFT display showing real-time readings and system status.
 
 #### Pin Configuration
-
+_____________________________
 | Display Pin  | ESP32 Pin  |
 |--------------|------------|
 | LED          | 3.3V       |
@@ -72,14 +72,11 @@ Each unit features a color TFT display showing real-time readings and system sta
 | CS           | D21        |
 | GND          | GND        |
 | VCC          | 3.3V       |
+-----------------------------
 
 ### Camera System
 - 6 IP cameras positioned at each tank
 - NVR (Network Video Recorder) for centralized video management
 - Real-time streaming capabilities
-
-## Installation
-
-### Repository Setup
 
 
