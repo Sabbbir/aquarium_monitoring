@@ -79,4 +79,15 @@ _____________________________
 - NVR (Network Video Recorder) for centralized video management
 - Real-time streaming capabilities
 
+### ESP32 Firmware Installation
+Erase existing flash memory
 
+'''
+esptool.py --port /dev/ttyUSB0 erase_flash
+'''
+
+Flash MicroPython firmware
+
+"""
+esptool.py --port /dev/ttyUSB0 write_flash -z 0x1000 bin/ESP32_GENERIC-20241025-v1.24.0.bin
+"""
